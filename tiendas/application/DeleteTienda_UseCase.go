@@ -6,7 +6,7 @@ type DeleteTienda struct {
 	db domain.ITienda
 }
 
-func NewDeleteTienda(db domain.ITienda) *DeleteTienda{
+func NewDeleteTienda(db domain.ITienda) *DeleteTienda {
 	return &DeleteTienda{db: db}
 }
 

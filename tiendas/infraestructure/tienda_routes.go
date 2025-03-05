@@ -3,26 +3,28 @@ package infraestructure
 import (
 	"actividad/src/tiendas/application"
 	"actividad/src/tiendas/domain"
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(repo domain.ITienda) {
-	createTienda := application.NewCreatePerfume(repo)
-	createTiendaController := NewCreateTiendaController(*createTienda)
+func SetupRouter(repo domain.ITienda) *gin.Engine {
+	r := gin.Default()
+
+	createTienda := application.NewCreateTienda(repo)
+	createTiendaController := NewCreateTiendaController(createTienda)
 
 	viewTienda := application.NewViewTienda(repo)
-	viewTiendaController := NewViewTiendaController(*viewTienda)
+	viewTiendaController := NewViewTiendaController(viewTienda)
 
 	editTiendaUseCase := application.NewEditTienda(repo)
-	editTiendaController := NewEditTiendaController(*editTiendaUseCase)
+	editTiendaController := NewEditTiendaController(editTiendaUseCase)
 
 	deleteTiendaUseCase := application.NewDeleteTienda(repo)
-	deleteTiendaController := NewDeleteTiendaController(*deleteTiendaUseCase)
+	deleteTiendaController := NewDeleteTiendaController(deleteTiendaUseCase)
 
-	http.HandleFunc("/tiendas", createTiendaController.Execute)
-	http.HandleFunc("/tienda", viewTiendaController.Execute)
-	http.HandleFunc("/editTienda", editTiendaController.Execute)
-	http.HandleFunc("/deleteTienda", deleteTiendaController.Execute)
+	r.POST("/tiendas", createTiendaController.Execute)
+	r.GET("/tiendas", viewTiendaController.Execute)
+	r.PUT("/tiendas/:id", editTiendaController.Execute)
+	r.DELETE("/tiendas/:id", deleteTiendaController.Execute)
 
-	http.ListenAndServe(":8080", nil)
+	return r
 }

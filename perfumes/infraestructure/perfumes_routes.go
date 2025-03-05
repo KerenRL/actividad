@@ -3,26 +3,28 @@ package infraestructure
 import (
 	"actividad/src/perfumes/application"
 	"actividad/src/perfumes/domain"
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(repo domain.IPerfume) {
+func SetupRouter(repo domain.IPerfume) *gin.Engine {
+	r := gin.Default()
+
 	createPerfume := application.NewCreatePerfume(repo)
-	createPerfumeController := NewCreatePerfumeController(*createPerfume)
+	createPerfumeController := NewCreatePerfumeController(createPerfume)
 
 	viewPerfumes := application.NewViewPerfumes(repo)
-	viewPerfumesController := NewViewPerfumesController(*viewPerfumes)
+	viewPerfumesController := NewViewPerfumesController(viewPerfumes)
 
 	editPerfumeUseCase := application.NewEditPerfume(repo)
-	editPerfumeController := NewEditPerfumeController(*editPerfumeUseCase)
+	editPerfumeController := NewEditPerfumeController(editPerfumeUseCase)
 
 	deletePerfumeUseCase := application.NewDeletePerfume(repo)
-	deletePerfumeController := NewDeletePerfumeController(*deletePerfumeUseCase)
+	deletePerfumeController := NewDeletePerfumeController(deletePerfumeUseCase)
 
-	http.HandleFunc("/perfumes", createPerfumeController.Execute)
-	http.HandleFunc("/perfume", viewPerfumesController.Execute)
-	http.HandleFunc("/editPerfume", editPerfumeController.Execute)
-	http.HandleFunc("/deletePerfume", deletePerfumeController.Execute)
+	r.POST("/perfumes", createPerfumeController.Execute)
+	r.GET("/perfumes", viewPerfumesController.Execute)
+	r.PUT("/perfumes/:id", editPerfumeController.Execute)
+	r.DELETE("/perfumes/:id", deletePerfumeController.Execute)
 
-	http.ListenAndServe(":8080", nil)
+	return r
 }

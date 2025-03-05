@@ -1,26 +1,22 @@
 package domain
 
 type ITienda interface {
-	SaveTienda(nombre string, ubicacion string)
-	GetAll()
-	UpdateTienda(id int32, nombre string, ubicacion string) error
+	SaveTienda(nombre string, direccion string) error
+	GetAll() ([]Tienda, error)
+	UpdateTienda(id int32, nombre string, direccion string) error
 	DeleteTienda(id int32) error
 }
 
-type tienda struct {
-	ID     int32   `json:"id"`
-	Nombre  string  `json:"nombre"`
-	Ubicacion string  `json:"ubicacion"`
+type Tienda struct {
+	ID        int32  `json:"id"`
+	Nombre    string `json:"nombre"`
+	Direccion string `json:"direccion"`
 }
 
-func NewTienda(nombre string, ubicacion string) *tienda {
-	return &tienda{ID:1, Nombre: nombre, Ubicacion: ubicacion}
+func NewTienda(nombre string, direccion string) *Tienda {
+	return &Tienda{Nombre: nombre, Direccion: direccion}
 }
 
-func (p *tienda) GetAll() ([]tienda, error) {
-	return []tienda{}, nil
-}
-
-func (p *tienda) SetNombre(nombre string) {
-	p.Nombre =nombre
+func (t *Tienda) SetNombre(nombre string) {
+	t.Nombre = nombre
 }

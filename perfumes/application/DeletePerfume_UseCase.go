@@ -1,6 +1,8 @@
 package application
 
-import "actividad/src/perfumes/domain"
+import (
+	"actividad/src/perfumes/domain"
+)
 
 type DeletePerfume struct {
 	db domain.IPerfume

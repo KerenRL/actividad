@@ -2,33 +2,33 @@ package infraestructure
 
 import (
 	"actividad/src/tiendas/application"
-	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type DeleteTiendaController struct {
-	useCase application.DeleteTienda
+	useCase *application.DeleteTienda
 }
 
-func NewDeleteTiendaController(useCase application.DeleteTienda) *DeleteTiendaController {
+func NewDeleteTiendaController(useCase *application.DeleteTienda) *DeleteTiendaController {
 	return &DeleteTiendaController{useCase: useCase}
 }
 
-func (dp_c *DeleteTiendaController) Execute(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (dp_c *DeleteTiendaController) Execute(c *gin.Context) {
+	idStr := c.Query("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "ID de perfume inválido", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de tienda inválido"})
 		return
 	}
 
 	err = dp_c.useCase.Execute(int32(id))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error al eliminar la tienda: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al eliminar la tienda"})
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Tienda eliminada correctamente"))
+	c.JSON(http.StatusOK, gin.H{"message": "Tienda eliminada correctamente"})
 }

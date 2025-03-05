@@ -5,30 +5,31 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type DeletePerfumeController struct {
-	useCase application.DeletePerfume
+	useCase *application.DeletePerfume
 }
 
-func NewDeletePerfumeController(useCase application.DeletePerfume) *DeletePerfumeController {
+func NewDeletePerfumeController(useCase *application.DeletePerfume) *DeletePerfumeController {
 	return &DeletePerfumeController{useCase: useCase}
 }
 
-func (dp_c *DeletePerfumeController) Execute(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (dp_c *DeletePerfumeController) Execute(c *gin.Context) {
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "ID de perfume inválido", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de perfume inválido"})
 		return
 	}
 
 	err = dp_c.useCase.Execute(int32(id))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error al eliminar el perfume: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error al eliminar el perfume: %v", err)})
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Perfume eliminado correctamente"))
+	c.JSON(http.StatusOK, gin.H{"message": "Perfume eliminado correctamente"})
 }

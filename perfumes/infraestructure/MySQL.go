@@ -20,11 +20,12 @@ func NewMySQL() domain.IPerfume {
 	}
 	return &MySQL{conn: conn}
 }
-func (mysql *MySQL) SavePerfume(marca string, modelo string, precio float32) {
+
+func (mysql *MySQL) SavePerfume(marca string, modelo string, precio float32) error {
 	query := "INSERT INTO perfume (marca, modelo, precio) VALUES (?, ?, ?)"
 	result, err := mysql.conn.ExecutePreparedQuery(query, marca, modelo, precio)
 	if err != nil {
-		log.Fatalf("Error al ejecutar la consulta: %v", err)
+		return fmt.Errorf("Error al ejecutar la consulta: %v", err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
@@ -33,26 +34,31 @@ func (mysql *MySQL) SavePerfume(marca string, modelo string, precio float32) {
 	} else {
 		log.Println("[MySQL] - No se insertó ninguna fila")
 	}
+	return nil
 }
 
-func (mysql *MySQL) GetAll() {
+func (mysql *MySQL) GetAll() ([]domain.Perfume, error) {
 	query := "SELECT * FROM perfume"
-	rows := mysql.conn.FetchRows(query)
+	rows, err := mysql.conn.FetchRows(query)
+	if err != nil {
+		return nil, fmt.Errorf("Error al ejecutar la consulta SELECT: %v", err)
+	}
 	defer rows.Close()
 
+	var perfumes []domain.Perfume
+
 	for rows.Next() {
-		var id int
-		var marca, modelo string
-		var precio float32
-		if err := rows.Scan(&id, &marca, &modelo, &precio); err != nil {
+		var perfume domain.Perfume
+		if err := rows.Scan(&perfume.ID, &perfume.Marca, &perfume.Modelo, &perfume.Precio); err != nil {
 			fmt.Printf("Error al escanear la fila: %v\n", err)
 		}
-		fmt.Printf("ID: %d, Marca: %s, Modelo: %s, Precio: %.2f\n", id, marca, modelo, precio)
+		perfumes = append(perfumes, perfume)
 	}
 
 	if err := rows.Err(); err != nil {
 		fmt.Printf("Error iterando sobre las filas: %v\n", err)
 	}
+	return perfumes, nil
 }
 
 func (mysql *MySQL) UpdatePerfume(id int32, marca string, modelo string, precio float32) error {

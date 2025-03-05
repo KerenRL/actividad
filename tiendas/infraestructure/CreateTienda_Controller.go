@@ -2,38 +2,45 @@ package infraestructure
 
 import (
 	"actividad/src/tiendas/application"
-	"encoding/json"
+	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CreateTiendaController struct {
-	useCase application.CreateTienda
+	useCase *application.CreateTienda
 }
 
-func NewCreateTiendaController(useCase application.CreateTienda) *CreateTiendaController {
+func NewCreateTiendaController(useCase *application.CreateTienda) *CreateTiendaController {
+	if useCase == nil {
+		log.Println("Error: useCase es nil en CreateTiendaController")
+	}
 	return &CreateTiendaController{useCase: useCase}
 }
 
 type RequestBody struct {
-	Nombre  string  `json:"nombre"`
-	Ubicacion string  `json:"ubicacion"`
+	Nombre    string `json:"nombre"`
+	Ubicacion string `json:"ubicacion"`
 }
 
-func (cp_c *CreateTiendaController) Execute(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
-		return
-	}
-
+func (cp_c *CreateTiendaController) Execute(c *gin.Context) {
 	var body RequestBody
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		http.Error(w, "Error al leer el JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error al leer el JSON", "detalles": err.Error()})
 		return
 	}
 
-	cp_c.useCase.Execute(body.Nombre, body.Ubicacion)
+	if cp_c.useCase == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Dependencia useCase no inicializada"})
+		return
+	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Perfume agregado correctamente"})
+	err := cp_c.useCase.Execute(body.Nombre, body.Ubicacion)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al agregar la tienda", "detalles": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Tienda agregada correctamente"})
 }

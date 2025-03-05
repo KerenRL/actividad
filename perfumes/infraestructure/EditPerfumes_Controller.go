@@ -2,45 +2,44 @@ package infraestructure
 
 import (
 	"actividad/src/perfumes/application"
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type EditPerfumeController struct {
-	useCase application.EditPerfume
+	useCase *application.EditPerfume
 }
 
-func NewEditPerfumeController(useCase application.EditPerfume) *EditPerfumeController {
+func NewEditPerfumeController(useCase *application.EditPerfume) *EditPerfumeController {
 	return &EditPerfumeController{useCase: useCase}
 }
 
-func (ep_c *EditPerfumeController) Execute(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (ep_c *EditPerfumeController) Execute(c *gin.Context) {
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "ID de perfume inválido", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de perfume inválido"})
 		return
 	}
 
-	var p struct {
+	var body struct {
 		Marca  string  `json:"marca"`
 		Modelo string  `json:"modelo"`
 		Precio float32 `json:"precio"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		http.Error(w, "Error al leer los datos", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error al leer los datos"})
 		return
 	}
 
-	err = ep_c.useCase.Execute(int32(id), p.Marca, p.Modelo, p.Precio)
+	err = ep_c.useCase.Execute(int32(id), body.Marca, body.Modelo, body.Precio)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error al actualizar el perfume: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar el perfume"})
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Perfume actualizado correctamente"))
+	c.JSON(http.StatusOK, gin.H{"message": "Perfume actualizado correctamente"})
 }

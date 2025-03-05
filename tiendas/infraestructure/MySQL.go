@@ -20,43 +20,50 @@ func NewMySQL() domain.ITienda {
 	}
 	return &MySQL{conn: conn}
 }
-func (mysql *MySQL) SaveTienda(nombre string, ubicacion string) {
-	query := "INSERT INTO tienda (nombre, ubicacion) VALUES ( ?, ?)"
-	result, err := mysql.conn.ExecutePreparedQuery(query, nombre, ubicacion)
+
+func (mysql *MySQL) SaveTienda(nombre string, direccion string) error {
+	query := "INSERT INTO tienda (nombre, direccion) VALUES (?, ?)"
+	result, err := mysql.conn.ExecutePreparedQuery(query, nombre, direccion)
 	if err != nil {
-		log.Fatalf("Error al ejecutar la consulta: %v", err)
+		return fmt.Errorf("Error al ejecutar la consulta: %v", err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 1 {
-		log.Printf("[MySQL] - Tienda guardada correctamente: Nombre: %s - Ubicacion: %.2f", nombre, ubicacion)
+		log.Printf("[MySQL] - Tienda guardada correctamente: Nombre: %s Dirección: %s", nombre, direccion)
 	} else {
 		log.Println("[MySQL] - No se insertó ninguna fila")
 	}
+	return nil
 }
 
-func (mysql *MySQL) GetAll() {
+func (mysql *MySQL) GetAll() ([]domain.Tienda, error) {
 	query := "SELECT * FROM tienda"
-	rows := mysql.conn.FetchRows(query)
+	rows, err := mysql.conn.FetchRows(query)
+	if err != nil {
+		return nil, fmt.Errorf("Error al ejecutar la consulta SELECT: %v", err)
+	}
 	defer rows.Close()
 
+	var tiendas []domain.Tienda
+
 	for rows.Next() {
-		var id int
-		var nombre, ubicacion string
-		if err := rows.Scan(&id, &nombre, &ubicacion); err != nil {
+		var tienda domain.Tienda
+		if err := rows.Scan(&tienda.ID, &tienda.Nombre, &tienda.Direccion); err != nil {
 			fmt.Printf("Error al escanear la fila: %v\n", err)
 		}
-		fmt.Printf("ID: %d, Nombre: %s, Ubicacion: %.2f\n", id, nombre, ubicacion)
+		tiendas = append(tiendas, tienda)
 	}
 
 	if err := rows.Err(); err != nil {
 		fmt.Printf("Error iterando sobre las filas: %v\n", err)
 	}
+	return tiendas, nil
 }
 
-func (mysql *MySQL) UpdateTienda(id int32, nombre string, ubicacion string) error {
-	query := "UPDATE tienda SET nombre = ?, ubicacion = ? WHERE id = ?"
-	_, err := mysql.conn.ExecutePreparedQuery(query, nombre, ubicacion, id)
+func (mysql *MySQL) UpdateTienda(id int32, nombre string, direccion string) error {
+	query := "UPDATE tienda SET nombre = ?, direccion = ? WHERE id = ?"
+	_, err := mysql.conn.ExecutePreparedQuery(query, nombre, direccion, id)
 	if err != nil {
 		return fmt.Errorf("Error al ejecutar la consulta de actualización: %v", err)
 	}
